@@ -622,6 +622,34 @@
             }
         }
 
+        // 在 <script> 標籤內加入以下邏輯
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                // 取得目前獲得焦點的元素
+                const activeEl = document.activeElement;
+                
+                // 如果目前在 input 或 select 上
+                if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT') {
+                    // 避免觸發表單預設提交行為
+                    e.preventDefault();
+                    
+                    // 取得所有可輸入的元素清單
+                    const formElements = Array.from(document.querySelectorAll('input:not([type="hidden"]), select, button.btn-add, .main-btn'));
+                    const index = formElements.indexOf(activeEl);
+                    
+                    if (index > -1 && index < formElements.length - 1) {
+                        // 跳轉到下一個元素
+                        formElements[index + 1].focus();
+                        
+                        // 如果下一個是文字輸入框，順便自動全選文字，方便直接覆蓋輸入
+                        if (formElements[index + 1].tagName === 'INPUT') {
+                            formElements[index + 1].select();
+                        }
+                    }
+                }
+            }
+        });
+
         init();
     </script>
 </body>
