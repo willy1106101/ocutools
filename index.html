@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/docxtemplater@3.42.0/build/docxtemplater.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <!-- xlsx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -159,6 +160,13 @@
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+        .d-none {
+            display: none;
+        }
+        .c-pointer {
+            cursor: pointer;
+            user-select: none;
+        }
     </style>
 </head>
 
@@ -177,8 +185,9 @@
                 <li>點擊「批次產生並下載 ZIP 包」按鈕，即可獲得包含所有領據的 ZIP 壓縮檔。</li>
             </ol>
         </div>
-        <div class="section-title">1. 薪資所得【50】</div>
-        <div class="income-block">
+
+        <div class="section-title c-pointer" onclick='$("#ic1").toggle();'>1. 薪資所得【50】</div>
+        <div class="income-block d-none" id="ic1">
             <div class="check-grid">
                 <div class="check-item"><input type="checkbox" class="cat50" id="s_hour"> 鐘點費</div>
                 <div class="check-item"><input type="checkbox" class="cat50" id="s_attend"> 出席費</div>
@@ -196,8 +205,8 @@
             </div>
         </div>
 
-        <div class="section-title">2. 執行業務所得【9A、9B】</div>
-        <div class="income-block">
+        <div class="section-title c-pointer" onclick='$("#ic2").toggle();'>2. 執行業務所得【9A、9B】</div>
+        <div class="income-block d-none" id="ic2">
             <div class="check-grid">
                 <div class="check-item"><input type="checkbox" class="cat9a" id="s_speech"> 演講費</div>
                 <div class="check-item"><input type="checkbox" class="cat9a" id="s_write"> 稿費</div>
@@ -210,13 +219,13 @@
             </div>
         </div>
 
-        <div class="section-title">3. 獎金【91】</div>
-        <div class="income-block">
+        <div class="section-title c-pointer" onclick='$("#ic3").toggle();'>3. 獎金【91】</div>
+        <div class="income-block d-none" id="ic3">
             <div class="check-item"><input type="checkbox" class="cat91" id="s_award"> 競賽個人獎金</div>
         </div>
 
-        <div class="section-title">4. 免稅所得</div>
-        <div class="income-block">
+        <div class="section-title c-pointer" onclick='$("#ic4").toggle();'>4. 免稅所得</div>
+        <div class="income-block d-none" id="ic4">
             <div class="check-grid">
                 <div class="check-item"><input type="checkbox" class="catFree" id="s_f_trf"> 論文交通費</div>
                 <div class="check-item"><input type="checkbox" class="catFree" id="s_f_stu"> 獎助生</div>
@@ -229,8 +238,8 @@
             </div>
         </div>
 
-        <div class="section-title">5. 權利金【53】</div>
-        <div class="income-block">
+        <div class="section-title c-pointer" onclick='$("#ic5").toggle();'>5. 權利金【53】</div>
+        <div class="income-block d-none" id="ic5">
             <div class="check-item"><input type="checkbox" class="cat53" id="s_royalty"> 權利金</div>
         </div>
 
