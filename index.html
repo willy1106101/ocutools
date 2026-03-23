@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/docxtemplater@3.42.0/build/docxtemplater.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <!-- xlsx -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
             font-family: "Microsoft JhengHei", sans-serif;
@@ -272,7 +274,214 @@
     <script>
         let tplArrayBuffer = null;
 
+        // --- Excel 匯入功能 (確保資料完整填入) ---
         async function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx, .xls';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                        // 1. 定義「中文表頭」轉「英文 Key」的對照表 (必須與匯出時完全一致)
+                        const chineseToEng = {
+                            "鐘點費": "s_hour", "出席費": "s_attend", "專任助理": "s_full",
+                            "兼任助理": "s_part", "工讀費": "s_work", "審查費(一般)": "s_rv_g",
+                            "主持費": "s_host", "交通費(定價)": "s_rv_gb", "交通費定價金額": "s_rv_es",
+                            "薪資其它勾選": "s_50_other", "薪資其它註明": "s_50_text",
+                            "演講費": "s_speech", "稿費": "s_write", "審查費(教師)": "s_rv_t",
+                            "論文指導費": "s_paper", "執行業務其它勾選": "s_9a_other", "執行業務其它註明": "s_9a_text",
+                            "競賽獎金": "s_award", "論文交通費": "s_f_trf", "獎助生": "s_f_stu",
+                            "免稅交通費勾選": "s_f_gb", "免稅交通費金額": "s_f_gb_es",
+                            "免稅其它勾選": "s_free_other", "免稅其它註明": "s_free_text",
+                            "權利金": "s_royalty",
+                            "姓名": "name", "日期": "date", "身分證字號": "idCard",
+                            "銀行帳號": "acc", "戶籍地址": "addr", "專職機構": "org",
+                            "職銜": "job", "月份": "month", "是否兼任": "isPT",
+                            "總額(A)": "amt", "所得稅(B)": "tB", "補保(C)": "hC",
+                            "勞保(D)": "tD", "健保(E)": "tE", "勞退(F)": "tF",
+                            "電話": "phone", "銀行名稱": "bN", "分行名稱": "bB"
+                        };
+
+                        // 2. 將 Excel 原始資料 (中文 Key) 轉換回 英文 Key
+                        const rawData = XLSX.utils.sheet_to_json(worksheet);
+                        const importedData = rawData.map(row => {
+                            let engRow = {};
+                            for (let chKey in row) {
+                                const engKey = chineseToEng[chKey] || chKey; // 找不到對應就用原名
+                                engRow[engKey] = row[chKey];
+                            }
+                            return engRow;
+                        });
+
+                        if (importedData.length > 0) {
+                            // --- 以下邏輯維持不變，但資料現在已經是英文 Key 了 ---
+                            const checkFields = [
+                                's_hour', 's_attend', 's_full', 's_part', 's_work', 's_rv_g',
+                                's_host', 's_rv_gb', 's_50_other', 's_speech', 's_write',
+                                's_rv_t', 's_paper', 's_9a_other', 's_award', 's_f_trf',
+                                's_f_stu', 's_f_gb', 's_free_other', 's_royalty'
+                            ];
+                            const textFields = ['s_rv_es', 's_50_text', 's_9a_text', 's_f_gb_es', 's_free_text'];
+
+                            const firstRow = importedData[0];
+                            checkFields.forEach(id => {
+                                const el = document.getElementById(id);
+                                if (el) el.checked = (firstRow[id] === "■");
+                            });
+                            textFields.forEach(id => {
+                                const el = document.getElementById(id);
+                                if (el) el.value = firstRow[id] || "";
+                            });
+
+                            const tbody = document.getElementById('dataList');
+                            tbody.innerHTML = "";
+
+                            const tableRows = importedData.filter(d => d.name || d.idCard);
+                            tableRows.forEach(data => {
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                            <td><input type="text" class="name" value="${data.name || ''}"></td>
+                            <td><input type="date" class="row-date" value="${data.date || ''}"></td>
+                            <td><input type="text" class="idCard" value="${data.idCard || ''}" maxlength="10"></td>
+                            <td><input type="text" class="acc" value="${data.acc || ''}" maxlength="14"></td>
+                            <td><input type="text" class="addr" value="${data.addr || ''}"></td>
+                            <td><input type="text" class="org" value="${data.org || ''}"></td>
+                            <td><input type="text" class="job" value="${data.job || ''}"></td>
+                            <td><input type="text" class="month" value="${data.month || ''}"></td>
+                            <td><select class="isPT">
+                                <option value="否" ${data.isPT === "否" ? "selected" : ""}>否</option>
+                                <option value="是" ${data.isPT === "是" ? "selected" : ""}>是</option>
+                            </select></td>
+                            <td><input type="number" class="amt" value="${data.amt || ''}"></td>
+                            <td><input type="number" class="tB" value="${data.tB || ''}"></td>
+                            <td><input type="number" class="hC" value="${data.hC || ''}"></td>
+                            <td><input type="number" class="tD" value="${data.tD || ''}"></td>
+                            <td><input type="number" class="tE" value="${data.tE || ''}"></td>
+                            <td><input type="number" class="tF" value="${data.tF || ''}"></td>
+                            <td><input type="text" class="phone" value="${data.phone || ''}"></td>
+                            <td><input type="text" class="bN" value="${data.bN || ''}"></td>
+                            <td><input type="text" class="bB" value="${data.bB || ''}"></td>
+                            <td><button style="background:red; color:white; border:none; padding:5px; cursor:pointer;" onclick="this.parentElement.parentElement.remove()">刪</button></td>
+                        `;
+                                tbody.appendChild(tr);
+                            });
+                            alert(`成功匯入 ${tableRows.length} 筆資料`);
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('匯入失敗，請檢查檔案格式與表頭文字');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            input.click();
+        }
+
+        // --- Excel 匯出功能 (確保欄位完整不缺失) ---
+        function exportData() {
+            const getCheck = (id) => {
+                const el = document.getElementById(id);
+                return (el && el.checked) ? "■" : "";
+            };
+
+            // 1. 定義「英文 Key」對應「中文表頭」的字典
+            const columnMapping = {
+                // 上方勾選與文字區
+                s_hour: "鐘點費", s_attend: "出席費", s_full: "專任助理",
+                s_part: "兼任助理", s_work: "工讀費", s_rv_g: "審查費(一般)",
+                s_host: "主持費", s_rv_gb: "交通費(定價)", s_rv_es: "交通費定價金額",
+                s_50_other: "薪資其它勾選", s_50_text: "薪資其它註明",
+                s_speech: "演講費", s_write: "稿費", s_rv_t: "審查費(教師)",
+                s_paper: "論文指導費", s_9a_other: "執行業務其它勾選", s_9a_text: "執行業務其它註明",
+                s_award: "競賽獎金", s_f_trf: "論文交通費", s_f_stu: "獎助生",
+                s_f_gb: "免稅交通費勾選", s_f_gb_es: "免稅交通費金額",
+                s_free_other: "免稅其它勾選", s_free_text: "免稅其它註明",
+                s_royalty: "權利金",
+
+                // 下方個人清單區
+                name: "姓名", date: "日期", idCard: "身分證字號",
+                acc: "銀行帳號", addr: "戶籍地址", org: "專職機構",
+                job: "職銜", month: "月份", isPT: "是否兼任",
+                amt: "總額(A)", tB: "所得稅(B)", hC: "補保(C)",
+                tD: "勞保(D)", tE: "健保(E)", tF: "勞退(F)",
+                phone: "電話", bN: "銀行名稱", bB: "分行名稱"
+            };
+
+            // 2. 收集上方狀態 (英文格式)
+            const headerStatus = {
+                s_hour: getCheck("s_hour"), s_attend: getCheck("s_attend"), s_full: getCheck("s_full"),
+                s_part: getCheck("s_part"), s_work: getCheck("s_work"), s_rv_g: getCheck("s_rv_g"),
+                s_host: getCheck("s_host"), s_rv_gb: getCheck("s_rv_gb"),
+                s_rv_es: document.getElementById('s_rv_es')?.value || "",
+                s_50_other: getCheck("s_50_other"), s_50_text: document.getElementById('s_50_text')?.value || "",
+                s_speech: getCheck("s_speech"), s_write: getCheck("s_write"), s_rv_t: getCheck("s_rv_t"),
+                s_paper: getCheck("s_paper"), s_9a_other: getCheck("s_9a_other"),
+                s_9a_text: document.getElementById('s_9a_text')?.value || "",
+                s_award: getCheck("s_award"), s_f_trf: getCheck("s_f_trf"), s_f_stu: getCheck("s_f_stu"),
+                s_f_gb: getCheck("s_f_gb"), s_f_gb_es: document.getElementById('s_f_gb_es')?.value || "",
+                s_free_other: getCheck("s_free_other"), s_free_text: document.getElementById('s_free_text')?.value || "",
+                s_royalty: getCheck("s_royalty")
+            };
+
+            // 3. 收集所有行資料並轉換成中文 Key
+            const rows = document.querySelectorAll('#dataList tr');
+            let allDataChinese = [];
+
+            // 輔助函式：將單一物件的 Key 從英文換成中文
+            const convertToChinese = (obj) => {
+                let newObj = {};
+                for (let key in obj) {
+                    const chineseKey = columnMapping[key] || key; // 如果找不到對應就用原 Key
+                    newObj[chineseKey] = obj[key];
+                }
+                return newObj;
+            };
+
+            if (rows.length === 0) {
+                allDataChinese.push(convertToChinese(headerStatus));
+            } else {
+                rows.forEach(row => {
+                    const rawRow = {
+                        ...headerStatus,
+                        name: row.querySelector('.name')?.value || "",
+                        date: row.querySelector('.row-date')?.value || "",
+                        idCard: row.querySelector('.idCard')?.value || "",
+                        acc: row.querySelector('.acc')?.value || "",
+                        addr: row.querySelector('.addr')?.value || "",
+                        org: row.querySelector('.org')?.value || "",
+                        job: row.querySelector('.job')?.value || "",
+                        month: row.querySelector('.month')?.value || "",
+                        isPT: row.querySelector('.isPT')?.value || "否",
+                        amt: row.querySelector('.amt')?.value || "",
+                        tB: row.querySelector('.tB')?.value || "",
+                        hC: row.querySelector('.hC')?.value || "",
+                        tD: row.querySelector('.tD')?.value || "",
+                        tE: row.querySelector('.tE')?.value || "",
+                        tF: row.querySelector('.tF')?.value || "",
+                        phone: row.querySelector('.phone')?.value || "",
+                        bN: row.querySelector('.bN')?.value || "",
+                        bB: row.querySelector('.bB')?.value || ""
+                    };
+                    allDataChinese.push(convertToChinese(rawRow));
+                });
+            }
+
+            // 4. 執行 Excel 轉換與下載
+            const worksheet = XLSX.utils.json_to_sheet(allDataChinese);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "領據資料");
+
+            XLSX.writeFile(workbook, `領據資料匯出_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        // --- json ---
+        async function importData_() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
@@ -360,7 +569,7 @@
         }
 
         // 資料匯出功能 
-        function exportData() {
+        function exportData_() {
             // 輔助函式：判斷勾選並回傳特定符號 (符合你 import 的邏輯)
             const getCheck = (id) => {
                 const el = document.getElementById(id);
@@ -621,26 +830,25 @@
                 alert("❌ 產生過程中發生錯誤：\n" + error.message + "\n請檢查樣板內的標籤是否寫錯（例如少了括號）。");
             }
         }
-
         // 在 <script> 標籤內加入以下邏輯
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 // 取得目前獲得焦點的元素
                 const activeEl = document.activeElement;
-                
+
                 // 如果目前在 input 或 select 上
                 if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT') {
                     // 避免觸發表單預設提交行為
                     e.preventDefault();
-                    
+
                     // 取得所有可輸入的元素清單
                     const formElements = Array.from(document.querySelectorAll('input:not([type="hidden"]), select, button.btn-add, .main-btn'));
                     const index = formElements.indexOf(activeEl);
-                    
+
                     if (index > -1 && index < formElements.length - 1) {
                         // 跳轉到下一個元素
                         formElements[index + 1].focus();
-                        
+
                         // 如果下一個是文字輸入框，順便自動全選文字，方便直接覆蓋輸入
                         if (formElements[index + 1].tagName === 'INPUT') {
                             formElements[index + 1].select();
