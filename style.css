@@ -1,0 +1,239 @@
+/* 預設變數 (淺色模式) */
+:root {
+    --bg-main: #f0f2f5;
+    --card-bg: white;
+    --text-color: #333;
+    --border-color: #eee;
+    --income-bg: #fdfdfd;
+    --table-th: #f8f9fa;
+    --input-bg: white;
+}
+
+/* 當屬性為 dark 時自動切換變數 */
+[data-bs-theme="dark"] {
+    --bg-main: #121212;
+    --card-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --border-color: #333;
+    --income-bg: #252525;
+    --table-th: #2a2a2a;
+    --input-bg: #2a2a2a;
+}
+
+body {
+    font-family: "Microsoft JhengHei", sans-serif;
+    background: var(--bg-main);
+    padding: 20px;
+    color: var(--text-color);
+    transition: background 0.3s, color 0.3s;
+}
+
+.card {
+    max-width: 1100px;
+    margin: auto;
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #007bff;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.section-title {
+    background: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin: 25px 0 10px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.income-block {
+    background: var(--income-bg);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+    border-left: 5px solid #007bff;
+}
+
+.check-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+/* 針對輸入框與選擇框 */
+input[type="text"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+    background: var(--input-bg);
+    color: var(--text-color);
+}
+
+.other-input {
+    border: none;
+    border-bottom: 1px solid #999;
+    border-radius: 0;
+    padding: 2px;
+    font-size: 14px;
+    width: 150px;
+    background: transparent;
+    color: var(--text-color);
+}
+
+/* 表格樣式 */
+.table-wrapper {
+    overflow-x: auto;
+    margin: 20px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 2000px;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.data-table th,
+.data-table td {
+    border: 1px solid var(--border-color);
+    padding: 8px;
+    text-align: center;
+    background: var(--card-bg);
+}
+
+.data-table th {
+    background: var(--table-th);
+}
+
+/* 按鈕樣式維持原樣 */
+.btn-add {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.main-btn {
+    width: 100%;
+    background: #28a745;
+    color: white;
+    padding: 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 30px;
+}
+
+.status-tag {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    background: var(--table-th);
+    color: var(--text-color);
+    margin-bottom: 15px;
+}
+
+/* 下拉選單基礎容器 */
+.custom-dropdown {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: inline-block;
+    z-index: 9999;
+}
+
+/* 觸發按鈕樣式 */
+.dropdown-trigger {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-trigger:hover {
+    background: var(--table-th);
+}
+
+/* 下拉內容選單 (預設隱藏) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 45px;
+    background-color: var(--card-bg);
+    min-width: 120px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 1;
+}
+
+/* 下拉選單內的按鈕 */
+.dropdown-content button {
+    color: var(--text-color);
+    padding: 10px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dropdown-content button:hover {
+    background-color: var(--table-th);
+}
+
+.dropdown-content .divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 4px 0;
+}
+
+/* 顯示選單的 Class (由 JS 控制) */
+.custom-dropdown.show .dropdown-content {
+    display: block;
+}
