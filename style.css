@@ -237,3 +237,7 @@ select {
 .custom-dropdown.show .dropdown-content {
     display: block;
 }
+
+.d-none {
+    display: none;
+}
